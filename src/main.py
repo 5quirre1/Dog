@@ -3,6 +3,7 @@ import pygame
 import random
 import pyttsx3
 import threading
+import os
 
 message_label = None
 engine = pyttsx3.init()
@@ -57,7 +58,6 @@ But in the end, it doesn't even matter
 I had to fall to lose it all
 But in the end, it doesn't even matter
 ''']
-    # LOLASLG
     message = random.choice(messages)
     message_label = Label(root, text=message, bg="white", font=("Arial", 12))
     message_label.place(x=dog.dog_label.winfo_x(), y=dog.dog_label.winfo_y() - 20)
@@ -66,24 +66,23 @@ But in the end, it doesn't even matter
 
     message_label.after(3000, message_label.destroy)
 
-
-
-
 class Dog:
     def __init__(self, root):
         self.root = root
-        self.dog_photo = PhotoImage(file="random window/stupid_egg_dog.png")
+        self.dog_photo = PhotoImage(file=os.path.join("src", "stuff", "stupid_egg_dog.png"))
         self.dog_photo = self.dog_photo.subsample(2, 2)
         self.dog_label = Label(root, image=self.dog_photo)
         self.dog_label.image = self.dog_photo
         self.dog_label.place(x=200, y=180)
-        self.bg_music = "random window/main.mp3"
+        
+        self.bg_music = os.path.join("src", "stuff", "main.mp3")
         pygame.init()
         pygame.mixer.init()
         self.music = pygame.mixer.Sound(self.bg_music)
         self.music.set_volume(0.2)
         self.music.play(-1)
-        self.walk_sound = "random window/mr-krabs-walking.mp3"
+        
+        self.walk_sound = os.path.join("src", "stuff", "mr-krabs-walking.mp3")
         self.walk_sound = pygame.mixer.Sound(self.walk_sound)
         self.walk_sound_playing = False
         self.moving = False
@@ -116,7 +115,9 @@ root = Tk()
 root.configure(bg="teal")
 root.geometry("700x700")
 root.title("dog")
-root.iconbitmap("random window/stupid_egg_dog.ico")
+
+icon_path = os.path.join("src", "stuff", "stupid_egg_dog.ico")
+root.iconbitmap(os.path.abspath(icon_path))
 
 dog = Dog(root)
 
