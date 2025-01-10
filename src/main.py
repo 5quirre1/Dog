@@ -58,6 +58,7 @@ But in the end, it doesn't even matter
 I had to fall to lose it all
 But in the end, it doesn't even matter
 ''']
+    # in the end
     message = random.choice(messages)
     message_label = Label(root, text=message, bg="white", font=("Arial", 12))
     message_label.place(x=dog.dog_label.winfo_x(), y=dog.dog_label.winfo_y() - 20)
