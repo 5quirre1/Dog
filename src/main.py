@@ -7,13 +7,15 @@ import os
 
 message_label = None
 engine = pyttsx3.init()
+exploded = False
 
 def dog_click_message(event):
     global message_label
     if message_label:
         message_label.destroy()
-    messages = ["Woof", "eggs", "greg", "save me", "I'm gay", 
-'''
+    messages = [
+        "Woof", "eggs", "greg", "save me", "I'm gay",
+        '''
 It starts with one, one thing, I don't know why
 It doesn't even matter how hard you try
 Keep that in mind, I designed this rhyme to explain in due time
@@ -57,8 +59,9 @@ I tried so hard and got so far
 But in the end, it doesn't even matter
 I had to fall to lose it all
 But in the end, it doesn't even matter
-''']
-    # in the end
+'''
+    ]
+    #in the end
     message = random.choice(messages)
     message_label = Label(root, text=message, bg="white", font=("Arial", 12))
     message_label.place(x=dog.dog_label.winfo_x(), y=dog.dog_label.winfo_y() - 20)
@@ -75,14 +78,14 @@ class Dog:
         self.dog_label = Label(root, image=self.dog_photo)
         self.dog_label.image = self.dog_photo
         self.dog_label.place(x=200, y=180)
-        
+
         self.bg_music = os.path.join("src", "stuff", "main.mp3")
         pygame.init()
         pygame.mixer.init()
         self.music = pygame.mixer.Sound(self.bg_music)
         self.music.set_volume(0.2)
         self.music.play(-1)
-        
+
         self.walk_sound = os.path.join("src", "stuff", "mr-krabs-walking.mp3")
         self.walk_sound = pygame.mixer.Sound(self.walk_sound)
         self.walk_sound_playing = False
@@ -93,14 +96,27 @@ class Dog:
         global message_label
         if message_label:
             message_label.destroy()
-        if key == "Up":
-            self.dog_label.place(x=self.dog_label.winfo_x(), y=self.dog_label.winfo_y() - self.speed)
-        elif key == "Down":
-            self.dog_label.place(x=self.dog_label.winfo_x(), y=self.dog_label.winfo_y() + self.speed)
-        elif key == "Left":
-            self.dog_label.place(x=self.dog_label.winfo_x() - self.speed, y=self.dog_label.winfo_y())
-        elif key == "Right":
-            self.dog_label.place(x=self.dog_label.winfo_x() + self.speed, y=self.dog_label.winfo_y())
+        if not exploded:
+            if key == "Up":
+                new_y = self.dog_label.winfo_y() - self.speed
+                if new_y < 0:
+                    new_y = self.root.winfo_height() - self.dog_label.winfo_height()
+                self.dog_label.place(x=self.dog_label.winfo_x(), y=new_y)
+            elif key == "Down":
+                new_y = self.dog_label.winfo_y() + self.speed
+                if new_y > self.root.winfo_height() - self.dog_label.winfo_height():
+                    new_y = 0
+                self.dog_label.place(x=self.dog_label.winfo_x(), y=new_y)
+            elif key == "Left":
+                new_x = self.dog_label.winfo_x() - self.speed
+                if new_x < 0:
+                    new_x = self.root.winfo_width() - self.dog_label.winfo_width()
+                self.dog_label.place(x=new_x, y=self.dog_label.winfo_y())
+            elif key == "Right":
+                new_x = self.dog_label.winfo_x() + self.speed
+                if new_x > self.root.winfo_width() - self.dog_label.winfo_width():
+                    new_x = 0
+                self.dog_label.place(x=new_x, y=self.dog_label.winfo_y())
 
     def start_walking_sound(self):
         if not self.walk_sound_playing:
@@ -112,9 +128,29 @@ class Dog:
             self.walk_sound.stop()
             self.walk_sound_playing = False
 
+    def explode_dog(self):
+        global exploded
+        if not exploded:
+            exploded = True
+            self.music.stop()
+
+            explosion_message = "I'm going to explode now"
+            threading.Thread(target=lambda: (engine.stop(), engine.say(explosion_message), engine.runAndWait()), daemon=True).start()
+
+            explosion_image = PhotoImage(file=os.path.join("src", "stuff", "explosion.png"))
+            explosion_image = explosion_image.subsample(2, 2)
+            explosion_label = Label(self.root, image=explosion_image)
+            explosion_label.image = explosion_image
+            explosion_label.place(x=self.dog_label.winfo_x(), y=self.dog_label.winfo_y())
+
+            explosion_sound = pygame.mixer.Sound(os.path.join("src", "stuff", "loud-explosion.mp3"))
+            explosion_sound.play()
+
+            self.root.after(2000, root.destroy)
+
 root = Tk()
 root.configure(bg="teal")
-root.geometry("700x700")
+root.geometry("1000x700")
 root.title("dog")
 
 icon_path = os.path.join("src", "stuff", "stupid_egg_dog.ico")
@@ -125,7 +161,11 @@ dog = Dog(root)
 keys_pressed = set()
 
 def key_press(event):
-    if event.keysym in ["Up", "Down", "Left", "Right"]:
+    if exploded:
+        root.destroy()
+    if event.keysym.upper() == "E":
+        dog.explode_dog()
+    if event.keysym in ["Up", "Down", "Left", "Right"] and not exploded:
         keys_pressed.add(event.keysym)
         if not dog.moving:
             dog.moving = True
@@ -140,7 +180,7 @@ def key_release(event):
             dog.stop_walking_sound()
 
 def move_dog():
-    if dog.moving:
+    if dog.moving and not exploded:
         for key in list(keys_pressed):
             dog.move_dog(key)
         root.after(50, move_dog)
